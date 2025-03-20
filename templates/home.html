@@ -1,9 +1,59 @@
-{% extends 'layouts/blank.html' %}
-
-{% block content %} 
-
-    <div class="max-w-4xl mx-auto px-8 py-24">
-        <h1>New Project</h1>
-    </div>
-
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy Django to ECS Fargate</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Deploying a Django Application to AWS ECS Fargate</h1>
+    <p>Amazon ECS Fargate is a serverless compute engine that allows you to run containers without managing servers. Follow these steps to deploy a Django app.</p>
+    
+    <h2>Step 1: Containerize the Django Application</h2>
+    <p>Create a <code>Dockerfile</code> for your Django app:</p>
+    <pre>
+        FROM python:3.11
+        WORKDIR /app
+        COPY requirements.txt .
+        RUN pip install -r requirements.txt
+        COPY . .
+        CMD ["gunicorn", "--bind", "0.0.0.0:8000", "myproject.wsgi:application"]
+    </pre>
+    
+    <h2>Step 2: Push Image to Amazon ECR</h2>
+    <p>Build and push the Docker image to Amazon Elastic Container Registry (ECR):</p>
+    <pre>
+        aws ecr create-repository --repository-name django-app
+        docker build -t django-app .
+        docker tag django-app:latest <your-account-id>.dkr.ecr.<region>.amazonaws.com/django-app:latest
+        aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.<region>.amazonaws.com
+        docker push <your-account-id>.dkr.ecr.<region>.amazonaws.com/django-app:latest
+    </pre>
+    
+    <h2>Step 3: Create ECS Fargate Cluster and Task Definition</h2>
+    <p>Use AWS Console or CLI to set up an ECS cluster and task definition. Ensure you specify the correct container image from ECR.</p>
+    
+    <h2>Step 4: Deploy the Service</h2>
+    <p>Create an ECS service and attach an Application Load Balancer (ALB) for handling traffic.</p>
+    
+    <h2>Step 5: Update and Scale</h2>
+    <p>Use AWS ECS rolling updates to deploy new versions seamlessly.</p>
+    
+    <p>Now, your Django app is running on AWS ECS Fargate!</p>
+</body>
+</html>
